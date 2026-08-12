@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK hynix Cleanroom Escape</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1017;color:#fff;font-family:Arial,"Noto Sans KR",sans-serif}
+body{display:flex;flex-direction:column}
+header{height:74px;flex:none;display:flex;align-items:center;padding:0 24px;background:#0c121b;border-bottom:2px solid #303b49;gap:22px}
+.logo{font-weight:900;font-size:25px;color:#f45b2b;line-height:1}.logo small{display:block;color:#fff;font-size:8px;letter-spacing:2px;text-align:center;margin-top:4px}
+h1{margin:0;font-size:26px}
+.actions{margin-left:auto;display:flex;gap:9px}
+button{border:1px solid #596879;background:#17212d;color:#fff;border-radius:9px;padding:10px 15px;font-weight:800;cursor:pointer}
+button:hover{background:#263443}
+#layout{display:flex;flex:1;min-height:0}
+aside{width:245px;flex:none;background:#101720;border-right:1px solid #303b49;padding:16px;overflow:auto}
+.panel{background:#151e29;border:1px solid #354252;border-radius:12px;padding:14px;margin-bottom:12px}
+.panel h3{margin:0 0 9px;color:#ff6b32;font-size:13px;letter-spacing:1px}
+.panel p{margin:0;color:#dce4ec;font-size:13px;line-height:1.65}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat{background:#0d141d;border-radius:8px;padding:9px}.stat span{display:block;color:#8d9baa;font-size:11px}.stat b{font-size:16px}
+.legend{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:12px;color:#dbe2e9}
+.icon{width:22px;height:22px;border-radius:4px;border:1px solid #667484;flex:none}
+.i-player{background:#fff}.i-goal{background:#69d153}.i-oht{background:#f5a623}.i-hazard{background:repeating-linear-gradient(135deg,#222 0 5px,#e7b426 5px 10px)}
+#stage{flex:1;min-width:0;min-height:0;padding:14px;background:#080d13;display:flex;align-items:center;justify-content:center}
+#game{display:block;width:min(100%,1150px);height:auto;max-height:calc(100vh - 102px);aspect-ratio:1150/680;border:2px solid #3e4958;border-radius:10px;background:#d8d8d2;box-shadow:0 20px 60px #000b}
+#toast{position:fixed;top:90px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 18px;border-radius:10px;background:#182333;border:1px solid #61738a;opacity:0;pointer-events:none;transition:.25s;z-index:30;font-weight:900}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.overlay{position:fixed;inset:0;background:rgba(3,7,12,.88);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:100;padding:25px}
+.overlay.show{display:flex}
+.modal{width:min(900px,94vw);padding:48px 40px;text-align:center;border-radius:22px;border:2px solid #61738a;background:linear-gradient(145deg,#172332,#080d14);box-shadow:0 30px 100px #000}
+.kicker{color:#8ea4bc;letter-spacing:5px;font-weight:900;font-size:15px;margin-bottom:18px}
+.value{font-size:clamp(42px,7vw,82px);font-weight:1000;margin:0 0 18px;background:linear-gradient(90deg,#fff,#a6d0ff);color:transparent;background-clip:text;-webkit-background-clip:text}
+.desc{font-size:clamp(17px,2.5vw,27px);font-weight:800;line-height:1.55;color:#e8edf3}
+.badge{display:inline-block;margin-top:25px;padding:9px 18px;border-radius:999px;background:#23486e;color:#c7e3ff;font-weight:900}
+.final-title{font-size:clamp(34px,5.5vw,68px);font-weight:1000;line-height:1.25;margin-bottom:22px}
+.final-sub{color:#b9c6d5;font-size:19px;line-height:1.6}
+.try{margin-top:30px;background:#fff;color:#10151c;border:0;padding:14px 38px;font-size:20px;border-radius:11px}
+@media(max-width:760px){aside{display:none}header{height:60px;padding:0 14px}h1{font-size:19px}.logo{font-size:19px}.actions button{padding:8px 10px}}
+.forbidden-note{color:#ffdf72;font-weight:900}
+.nameInput{padding:12px 14px;border-radius:9px;border:1px solid #596879;background:#0d141d;color:#fff;font-size:15px;width:240px;text-align:center;outline:none}
+.nameInput:focus{border-color:#8aa2bd}
+.rankRow{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #24313f;font-size:15px}
+.rankRow:last-child{border-bottom:none}
+.rankRow b{color:#8ea4bc;font-weight:800}
+.rankRow span{color:#e8edf3}
+.pageBtn{border:1px solid #596879;background:#17212d;color:#fff;border-radius:8px;padding:8px 14px;font-weight:800;cursor:pointer}
+.pageBtn:hover:not(:disabled){background:#263443}
+.pageBtn:disabled{opacity:.35;cursor:default}
+
+.quiz-modal{max-width:980px}
+.quiz-option{width:100%;padding:16px 18px;text-align:left;font-size:16px;line-height:1.45;background:#101923;border:1px solid #526276}
+.quiz-option:hover{background:#223345;border-color:#8aa2bd}
+.quiz-option:disabled{cursor:default;opacity:.7}
+#quizMsg.ok{color:#6be18b}
+#quizMsg.bad{color:#ff7272}
+@media(max-width:760px){#quizOptions{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">SK hynix<small>MEMORY SEMICONDUCTOR</small></div>
+  <h1>클린룸 탈출 미션</h1>
+  <div class="actions">
+    <button id="viewRankBtnHeader">🏆 랭킹</button>
+    <button id="restart">↻ 다시하기</button>
+  </div>
+</header>
+
+<div id="layout">
+<aside>
+  <div class="panel">
+    <h3>MISSION</h3>
+    <p>현재 직급 <b id="missionRank">사원</b>으로 클린룸의 장애물과 움직이는 <b>OHT</b>를 피해서 목표 지점까지 이동하세요.</p>
+  </div>
+  <div class="panel">
+    <h3>ROUND</h3>
+    <div class="stats">
+      <div class="stat"><span>현재 라운드</span><b id="round">1 / 6</b></div>
+      <div class="stat"><span>직급</span><b id="rank">사원</b></div>
+      <div class="stat"><span>충돌</span><b id="hits">0</b></div>
+      <div class="stat"><span>시간</span><b id="timer">0.0 s</b></div>
+      <div class="stat"><span>OHT</span><b>주의!</b></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>조작 방법</h3>
+    <p>🖱️ <b>마우스 포인터를 계속 따라 이동합니다.</b><br><br>
+    🟧 <b>가로·세로 OHT에 닿으면 즉시 1라운드로 돌아갑니다.</b><br><br>⛔ <b>금지 구역에 들어가면 즉시 1라운드로 돌아갑니다.</b><br><br>
+    🟩 목표에 도착하면 해당 라운드의 SKMS CoC 가치를 획득합니다.</p>
+  </div>
+  <div class="panel">
+    <h3>MAP SYMBOL</h3>
+    <div class="legend"><i class="icon i-player"></i>흰 방진복 플레이어</div>
+    <div class="legend"><i class="icon i-goal"></i>목표 지점</div>
+    <div class="legend"><i class="icon i-hazard"></i>고정 장애물</div>
+    <div class="legend"><i class="icon i-oht"></i>왕복 이동 OHT</div><div class="legend"><i class="icon" style="background:#8b4b76"></i>성희롱 행동 주의</div><div class="legend"><i class="icon" style="background:#8b3f3f"></i>직장 내 괴롭힘 주의</div><div class="legend"><i class="icon" style="background:repeating-linear-gradient(45deg,#5a1c1c 0 5px,#e3b82f 5px 10px)"></i>금지 구역</div>
+  </div>
+</aside>
+
+<div id="stage"><canvas id="game" width="1150" height="680"></canvas></div>
+</div>
+
+<div id="toast"></div>
+
+<div id="valueOverlay" class="overlay">
+  <div class="modal">
+    <div class="kicker">ROUND CLEAR · SKMS CoC</div>
+    <div id="value" class="value"></div>
+    <div id="desc" class="desc"></div>
+    <div class="badge">✓ 해당 가치를 획득했습니다</div>
+  </div>
+</div>
+
+
+<div id="quizOverlay" class="overlay">
+  <div class="modal quiz-modal">
+    <div class="kicker">ROUND CLEAR · KNOWLEDGE CHECK</div>
+    <div id="quizRank" class="badge">사원 승급 심사</div>
+    <div id="quizValue" class="value" style="font-size:clamp(34px,5vw,62px);margin-top:18px"></div>
+    <div id="quizQuestion" class="desc" style="margin:20px auto 24px;max-width:760px"></div>
+    <div id="quizOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:760px;margin:auto"></div>
+    <div id="quizMsg" style="margin-top:18px;font-weight:900;min-height:24px"></div>
+  </div>
+</div>
+
+<div id="finalOverlay" class="overlay">
+  <div class="modal">
+    <div class="kicker">MISSION COMPLETE · SKMS CoC</div>
+    <div class="final-title">SKMS CoC를 완벽하게 이해하여<br>훌륭한 구성원으로 거듭났습니다!</div>
+    <div class="final-sub">6개의 핵심 가치를 모두 획득했습니다.<br>최고를 향해 행동하고, 데이터로 해결하며, 함께 혁신하는 구성원입니다.</div>
+    <div id="finalTime" class="badge" style="margin-top:24px;font-size:16px"></div>
+    <div style="margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <input id="rankNameInput" class="nameInput" maxlength="10" placeholder="랭킹에 표시할 닉네임">
+      <button id="saveRankBtn">기록 저장</button>
+    </div>
+    <div id="saveMsg" style="min-height:22px;margin-top:10px;font-weight:900"></div>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+      <button id="viewRankBtn" style="background:#17212d;border:1px solid #596879;color:#fff;border-radius:9px;padding:12px 22px;font-weight:800;cursor:pointer">🏆 랭킹 보기</button>
+      <button class="try" id="tryAgain">TRY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<div id="rankOverlay" class="overlay">
+  <div class="modal" style="max-width:620px">
+    <div class="kicker">🏆 CLEANROOM ESCAPE · RANKING</div>
+    <div id="rankList" style="text-align:left;margin:16px auto 6px;max-width:520px;border:1px solid #354252;border-radius:12px;overflow:hidden;background:#0d141d"></div>
+    <div id="rankPager" style="display:flex;justify-content:center;gap:14px;align-items:center;margin-top:14px"></div>
+    <button class="try" id="closeRankBtn" style="margin-top:26px">닫기</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script>
+(function(){
+'use strict';
+
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;
+
+const values=[
+ {name:'Bar Raising',desc:'목표 수준 제고 · 최고를 향해 한 단계 높은 기준으로 행동한다.'},
+ {name:'Data Driven',desc:'데이터 기반 · 데이터로 소통하고 데이터로 해결한다.'},
+ {name:'One Team',desc:'원팀 협업 · 서로를 연결하고 하나로 협업한다.'},
+ {name:'Innovation',desc:'기술 혁신 · 더 쌓고, 더 작게 하고, 더 저장한다.'},
+ {name:'Customer Focus',desc:'고객 중심 · 고객보다 먼저 준비하고 신속하게 움직인다.'},
+ {name:'Perfection',desc:'디테일과 완성도 · 어려울 때 더 잘하고, 디테일에 강한 것이 실력이다.'}
+];
+
+const ranks=['사원','주임','대리','과장','차장','부장'];
+
+const quizzes=[
+ {q:'SKMS에서 말하는 SUPEX는 무엇을 의미할까요?',
+  a:['주어진 자원과 관계없이 불가능한 목표를 세우는 것','인간의 능력으로 도달할 수 있는 최고 수준','현재 수준을 유지하는 것','단기 매출만 높이는 것'],c:1},
+ {q:'SKMS의 가치 창출과 관련해 가장 적절한 행동은 무엇일까요?',
+  a:['감에 의존해 의사결정한다','측정 없이 결과만 추정한다','가치를 파악하고 측정·개선하는 체계를 만든다','데이터가 불리하면 사용하지 않는다'],c:2},
+ {q:'SKMS에서 회사 간 공유와 협력을 설명하는 표현은 무엇일까요?',
+  a:['각자도생','따로 또 같이','경쟁 우선','상명하복'],c:1},
+ {q:'SKMS가 기존 사업에 대해 강조하는 방향으로 가장 적절한 것은?',
+  a:['기존 방식에 안주한다','혁신을 멈춘다','끊임없이 혁신해 새로운 경제적 가치를 창출한다','기술 변화와 무관하게 운영한다'],c:2},
+ {q:'SKMS에서 고객과의 관계에 대한 설명으로 가장 적절한 것은?',
+  a:['고객 만족은 일회성이면 충분하다','고객의 pain point를 해소하고 지속적으로 만족시켜 신뢰를 얻는다','고객보다 내부 편의가 항상 우선이다','고객 요구는 제품 출시 후 고려한다'],c:1},
+ {q:'SKMS의 궁극적인 경영철학과 실행원리의 선순환에 대한 설명으로 옳은 것은?',
+  a:['구성원 행복 → VWBE 문화 → SUPEX Company로 이어지는 선순환','매출 → 경쟁 → 구성원 행복만 추구한다','규칙 → 통제 → 행복으로만 이어진다','개인 성과만 높이면 자동으로 완성된다'],c:0}
+];
+
+/* 더 어려운 맵: 좁은 통로 + OHT + 위험 행동 NPC */
+const maps=[
+ // R1 사원
+ {s:[80,90],g:[1060,590],w:[
+   [210,55,38,180],[365,190,220,38],[650,55,38,180],[790,190,220,38],
+   [180,380,180,38],[500,310,38,170],[640,500,260,38],[925,350,38,120]
+ ]},
+ // R2 주임
+ {s:[1060,590],g:[80,90],w:[
+   [60,220,230,38],[60,220,38,190],[320,220,38,190],[445,100,210,38],
+   [632,100,38,170],[755,280,230,38],[755,280,38,180],[485,500,270,38],
+   [400,380,38,90]
+ ]},
+ // R3 대리
+ {s:[80,95],g:[1060,585],w:[
+   [185,55,38,205],[185,280,220,38],[420,280,38,180],[510,60,38,140],
+   [605,170,245,38],[870,170,38,195],[595,360,245,38],[595,398,38,155],
+   [245,520,270,38],[800,485,38,95]
+ ]},
+ // R4 과장 - 완전 신규 맵
+ {s:[1060,585],g:[80,90],w:[
+   [850,465,38,100],       // 시작점 아래쪽을 가리지 않음
+   [650,465,200,38],       // 하단 중앙 벽
+   [650,300,38,165],       // 중앙 세로 벽
+   [420,300,230,38],       // 중앙 가로 벽
+   [420,140,38,160],       // 상단 연결 벽
+   [180,140,240,38],        // 왼쪽 상단 벽
+   [180,140,38,150],        // 왼쪽 세로 벽
+   [180,290,160,38],        // 왼쪽 중앙 벽
+   [340,290,38,150],        // 중앙 아래쪽 벽
+   [340,440,200,38]         // 하단 복귀 벽
+ ]},
+ // R5 차장
+ {s:[80,585],g:[1060,90],w:[
+   [65,440,255,38],[305,300,38,145],[305,300,230,38],[515,75,38,190],
+   [595,75,260,38],[835,75,38,200],[695,350,230,38],[695,350,38,150],
+   [430,520,280,38],[170,180,170,38]
+ ]},
+ // R6 부장
+ {s:[1060,585],g:[80,90],w:[
+   [70,500,230,38],[275,355,38,150],[275,355,215,38],[470,130,38,200],
+   [470,130,260,38],[705,130,38,210],[785,330,220,38],[785,330,38,170],
+   [490,500,290,38],[140,185,210,38],[360,60,38,100]
+ ]}
+];
+
+let round=0,hits=0,startTime=0,running=true;
+let player={x:0,y:0,r:16,speed:3.8};
+let mouse={x:0,y:0,inside:false};
+let goal={x:0,y:0};
+let walls=[],ohts=[],npcs=[],forbidden=[];
+let resetTimer=null,valueTimer=null;
+
+/* ── 랭킹 시스템: 미션(6라운드) 전체 클리어 시간 + 누적 재도전 횟수 ── */
+let missionStartTime=0,totalHits=0,lastFinalScore=0,lastFinalHits=0;
+
+function loadRound(n){
+ clearTimeout(resetTimer); clearTimeout(valueTimer);
+ round=n;
+ if(n===0) missionStartTime=performance.now();
+ const m=maps[round];
+ goal={x:m.g[0],y:m.g[1]};
+ walls=m.w.map(a=>({x:a[0],y:a[1],w:a[2],h:a[3]}));
+ const s=m.s; player.x=s[0];player.y=s[1];
+ mouse.x=s[0];mouse.y=s[1];mouse.inside=false;
+ hits=0;running=true;startTime=performance.now();
+ makeOHTs(); makeNPCs(); makeForbidden();
+ hide('valueOverlay');hide('finalOverlay');hide('quizOverlay');
+ updateUI(); toast('ROUND '+(round+1)+' 시작');
+}
+
+function makeOHTs(){
+ const p=[
+  [[110,150],[1020,150],92,34,2.45],
+  [[150,135],[1000,135],100,34,2.75],
+  [[100,345],[1040,345],92,34,2.9],
+  [[100,115],[1040,115],105,34,2.65],
+  [[110,260],[1020,260],98,34,3.0],
+  [[110,430],[1040,430],105,34,3.1]
+ ][round];
+
+ const horizontal=[
+   {x:p[0][0],x1:p[0][0],x2:p[1][0],y:p[0][1],w:p[2],h:p[3],spd:p[4]*1.08,dir:1,axis:'h'},
+   {x:p[1][0]-100,x1:p[0][0]+120,x2:p[1][0]-80,y:p[0][1]+((round%2)?150:0),w:78,h:30,spd:p[4]*.88,dir:-1,axis:'h'}
+ ];
+ const vertical=[
+   {x:260+(round%3)*180,y:75,y1:75,y2:560,w:72,h:32,spd:p[4]*.82,dir:1,axis:'v'},
+   {x:790-(round%2)*130,y:520,y1:120,y2:585,w:68,h:30,spd:p[4]*.72,dir:-1,axis:'v'}
+ ];
+ ohts=[...horizontal,...vertical];
+}
+
+function makeNPCs(){
+ const sets=[
+  [{x:520,y:95,type:'harass'},{x:700,y:410,type:'bully'}],
+  [{x:410,y:150,type:'bully'},{x:850,y:430,type:'harass'}],
+  [{x:350,y:455,type:'harass'},{x:760,y:95,type:'bully'}],
+  [{x:520,y:420,type:'bully'},{x:930,y:150,type:'harass'}],
+  [{x:390,y:90,type:'harass'},{x:610,y:450,type:'bully'}],
+  [{x:350,y:460,type:'bully'},{x:930,y:270,type:'harass'}]
+ ];
+ npcs=sets[round].map((n,i)=>({...n,baseX:n.x,baseY:n.y,phase:i*2.4,r:19}));
+}
+
+
+function makeForbidden(){
+ const sets=[
+  [[360,270,78,62],[735,355,105,78],[930,205,78,65],[440,65,95,65]],
+  [[350,65,125,90],[690,245,135,90],[95,425,125,80],[860,470,115,75]],
+  [[245,60,130,85],[600,385,145,90],[885,305,100,85],[85,440,115,75]],
+  // R4 과장: 주 통로를 완전히 비워 둔 신규 배치
+  [[900,120,95,70],[700,70,105,65],[475,205,90,65],[245,350,100,70]],
+  [[350,240,130,90],[690,470,135,75],[90,90,125,80],[870,100,110,80]],
+  [[105,290,130,85],[545,290,130,85],[885,120,110,85],[390,505,130,55]]
+ ];
+ forbidden=sets[round].map(a=>({x:a[0],y:a[1],w:a[2],h:a[3]}));
+}
+
+function updateUI(){
+ document.getElementById('round').textContent=(round+1)+' / 6';
+ document.getElementById('hits').textContent=hits;
+ document.getElementById('rank').textContent=ranks[round];
+ document.getElementById('missionRank').textContent=ranks[round];
+}
+
+function toast(t){
+ const e=document.getElementById('toast');
+ e.textContent=t;e.classList.add('show');
+ setTimeout(()=>e.classList.remove('show'),1400);
+}
+
+function show(id){document.getElementById(id).classList.add('show')}
+function hide(id){document.getElementById(id).classList.remove('show')}
+
+function circleRect(cx,cy,r,rect){
+ const x=Math.max(rect.x,Math.min(cx,rect.x+rect.w));
+ const y=Math.max(rect.y,Math.min(cy,rect.y+rect.h));
+ return Math.hypot(cx-x,cy-y)<r;
+}
+function canMove(x,y){
+ if(x<58||x>W-58||y<58||y>H-58)return false;
+ return !walls.some(r=>circleRect(x,y,player.r,r));
+}
+
+function updateOHT(){
+ ohts.forEach(o=>{
+   if(o.axis==='v'){
+     o.y+=o.dir*o.spd;
+     if(o.y<=o.y1){o.y=o.y1;o.dir=1}
+     if(o.y>=o.y2){o.y=o.y2;o.dir=-1}
+   }else{
+     o.x+=o.dir*o.spd;
+     if(o.x<=o.x1){o.x=o.x1;o.dir=1}
+     if(o.x>=o.x2){o.x=o.x2;o.dir=-1}
+   }
+ });
+}
+function updateNPCs(t){
+ npcs.forEach(n=>{
+   n.x=n.baseX+Math.sin(t*.0011+n.phase)*24;
+   n.y=n.baseY+Math.cos(t*.0015+n.phase)*18;
+ });
+}
+
+function hitObstacle(kind){
+ if(kind==='oht'){
+   toast('⚠ OHT 충돌! 1라운드부터 다시 시작합니다.');
+ }else if(kind==='harass'){
+   toast('⚠ 성희롱 행동 접근! 안전한 근무환경을 위해 처음부터 다시 시작합니다.');
+ }else{
+   toast('⚠ 직장 내 괴롭힘 접근! 안전한 근무환경을 위해 처음부터 다시 시작합니다.');
+ }
+ hits++;totalHits++;updateUI();running=false;
+ resetTimer=setTimeout(()=>loadRound(0),850);
+}
+
+
+function showQuiz(){
+ running=false;
+ const q=quizzes[round];
+ document.getElementById('quizRank').textContent=ranks[round]+' 승급 심사';
+ document.getElementById('quizValue').textContent=values[round].name;
+ document.getElementById('quizQuestion').textContent=q.q;
+ const box=document.getElementById('quizOptions'); box.innerHTML='';
+ document.getElementById('quizMsg').textContent='정답을 선택하세요. 틀리면 1라운드부터 다시 시작합니다.';
+ document.getElementById('quizMsg').className='';
+ q.a.forEach((text,i)=>{
+   const b=document.createElement('button');
+   b.className='quiz-option'; b.textContent=(i+1)+'. '+text;
+   b.onclick=()=>answerQuiz(i);
+   box.appendChild(b);
+ });
+ show('quizOverlay');
+}
+function answerQuiz(i){
+ const msg=document.getElementById('quizMsg');
+ document.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);
+ if(i!==quizzes[round].c){
+   msg.textContent='✕ 오답입니다. SKMS CoC 교육을 처음부터 다시 진행합니다.';
+   msg.className='bad';
+   totalHits++;
+   setTimeout(()=>{hide('quizOverlay');loadRound(0)},1000);
+   return;
+ }
+ msg.textContent='✓ 정답입니다! 해당 가치를 획득했습니다.';
+ msg.className='ok';
+ setTimeout(()=>{
+   hide('quizOverlay');
+   document.getElementById('value').textContent=values[round].name;
+   document.getElementById('desc').textContent=values[round].desc;
+   document.querySelector('#valueOverlay .badge').textContent='✓ '+ranks[round]+' · 해당 가치를 획득했습니다';
+   show('valueOverlay');
+   valueTimer=setTimeout(()=>{
+     hide('valueOverlay');
+     if(round<5) loadRound(round+1); else finishMission();
+   },2300);
+ },650);
+}
+
+function finishMission(){
+ lastFinalScore=Number(((performance.now()-missionStartTime)/1000).toFixed(1));
+ lastFinalHits=totalHits;
+ document.getElementById('finalTime').textContent='완료 시간 '+lastFinalScore.toFixed(1)+'s · 재도전 '+lastFinalHits+'회';
+ document.getElementById('rankNameInput').value='';
+ document.getElementById('saveRankBtn').disabled=false;
+ document.getElementById('saveMsg').textContent='';
+ document.getElementById('saveMsg').style.color='';
+ show('finalOverlay');
+}
+
+function update(){
+ const now=performance.now();
+ updateOHT();updateNPCs(now);
+ if(!running)return;
+
+ /* 핵심 변경: 클릭이 아니라 마우스 포인터를 계속 따라감 */
+ if(mouse.inside){
+   const dx=mouse.x-player.x,dy=mouse.y-player.y,d=Math.hypot(dx,dy);
+   if(d>3){
+     const step=Math.min(player.speed,d);
+     const nx=player.x+dx/d*step,ny=player.y+dy/d*step;
+     if(canMove(nx,player.y))player.x=nx;
+     if(canMove(player.x,ny))player.y=ny;
+   }
+ }
+
+ if(ohts.some(o=>circleRect(player.x,player.y,player.r+2,{x:o.x,y:o.y,w:o.w,h:o.h}))){
+   hitObstacle('oht');return;
+ }
+ if(forbidden.some(z=>circleRect(player.x,player.y,player.r,z))){
+   toast('⛔ 금지 구역 진입! 1라운드부터 다시 시작합니다.');
+   hits++; totalHits++; updateUI(); running=false;
+   resetTimer=setTimeout(()=>loadRound(0),850);
+   return;
+ }
+ for(const n of npcs){
+   if(Math.hypot(player.x-n.x,player.y-n.y)<player.r+n.r-2){
+     hitObstacle(n.type);return;
+   }
+ }
+ if(Math.hypot(player.x-goal.x,player.y-goal.y)<33){
+   showQuiz();
+ }
+}
+
+function drawFloor(){
+ ctx.fillStyle='#d9dad5';ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle='#c3c5c1';ctx.lineWidth=1;
+ for(let x=0;x<W;x+=45){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+ for(let y=0;y<H;y+=45){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ ctx.fillStyle='#747d86';
+ ctx.fillRect(0,0,W,34);ctx.fillRect(0,H-34,W,34);ctx.fillRect(0,0,34,H);ctx.fillRect(W-34,0,34,H);
+}
+
+function drawWalls(){
+ walls.forEach(r=>{
+  ctx.save();ctx.shadowColor='#0005';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+  ctx.fillStyle='#747d85';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.restore();
+  ctx.fillStyle='#aeb3b6';ctx.fillRect(r.x+4,r.y+4,r.w-8,7);
+  ctx.strokeStyle='#4b545d';ctx.strokeRect(r.x,r.y,r.w,r.h);
+ });
+ const machines=[[55,55],[760,500],[55,315],[420,540],[870,245]];
+ machines.forEach(([x,y])=>{
+   ctx.fillStyle='#a8adb0';ctx.fillRect(x,y,92,63);ctx.strokeStyle='#5a646c';ctx.strokeRect(x,y,92,63);
+   ctx.fillStyle='#26313b';ctx.fillRect(x+10,y+10,72,22);
+   ctx.fillStyle='#5ec0df';ctx.fillRect(x+17,y+15,28,10);
+   ctx.fillStyle='#e1e6e9';ctx.fillRect(x+54,y+15,18,10);
+   ctx.fillStyle='#606a73';ctx.fillRect(x+10,y+40,18,12);ctx.fillRect(x+37,y+40,18,12);ctx.fillRect(x+64,y+40,18,12);
+ });
+ [[180,255,95,55],[720,270,90,55],[370,420,105,55]].forEach(a=>{
+  ctx.save();ctx.beginPath();ctx.rect(a[0],a[1],a[2],a[3]);ctx.clip();
+  ctx.fillStyle='#222';ctx.fillRect(a[0],a[1],a[2],a[3]);ctx.strokeStyle='#efbe28';ctx.lineWidth=11;
+  for(let i=-90;i<180;i+=23){ctx.beginPath();ctx.moveTo(a[0]+i,a[1]);ctx.lineTo(a[0]+i+58,a[1]+a[3]);ctx.stroke()}
+  ctx.restore();ctx.strokeStyle='#333';ctx.strokeRect(...a);
+ });
+}
+
+function drawOHT(){
+ ohts.forEach(o=>{
+   ctx.strokeStyle='#66727e';ctx.lineWidth=8;
+   ctx.beginPath();
+   if(o.axis==='v'){
+     ctx.moveTo(o.x+o.w/2,o.y1-5);
+     ctx.lineTo(o.x+o.w/2,o.y2+o.h+5);
+   }else{
+     ctx.moveTo(o.x1+o.w/2,o.y-13);
+     ctx.lineTo(o.x2+o.w/2,o.y-13);
+   }
+   ctx.stroke();
+   ctx.strokeStyle='#b8c0c7';ctx.lineWidth=2;ctx.stroke();
+
+   ctx.save();ctx.shadowColor='#0007';ctx.shadowBlur=8;ctx.shadowOffsetY=4;
+   ctx.fillStyle='#f0a328';ctx.fillRect(o.x,o.y,o.w,o.h);ctx.restore();
+   ctx.fillStyle='#17212a';ctx.fillRect(o.x+10,o.y+7,o.w-20,17);
+   ctx.fillStyle='#fff';ctx.font='bold 10px Arial';ctx.textAlign='center';
+   ctx.fillText('OHT',o.x+o.w/2,o.y+19);ctx.textAlign='left';
+   ctx.fillStyle='#4c5660';ctx.fillRect(o.x+14,o.y+o.h,o.w-28,6);
+ });
+}
+
+function drawNPCs(){
+ npcs.forEach(n=>{
+   ctx.save();ctx.translate(n.x,n.y);
+   ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,23,22,7,0,0,Math.PI*2);ctx.fill();
+   // 경고 인물은 교육용 장애물로만 표현
+   ctx.fillStyle=n.type==='harass'?'#8b4b76':'#8b3f3f';
+   ctx.strokeStyle='#422a32';ctx.lineWidth=2;
+   ctx.beginPath();ctx.arc(0,-12,13,0,Math.PI*2);ctx.fill();ctx.stroke();
+   ctx.fillStyle=n.type==='harass'?'#b75f98':'#b95858';
+   ctx.fillRect(-14,2,28,24);ctx.strokeRect(-14,2,28,24);
+   ctx.fillStyle='#fff';ctx.font='bold 9px Arial';ctx.textAlign='center';
+   ctx.fillText(n.type==='harass'?'주의':'괴롭힘',0,19);
+   ctx.restore();
+ });
+}
+
+function drawForbidden(){
+ forbidden.forEach(z=>{
+   ctx.save();
+   ctx.fillStyle='rgba(125,28,28,.82)';
+   ctx.fillRect(z.x,z.y,z.w,z.h);
+   ctx.strokeStyle='#f1c232';ctx.lineWidth=5;ctx.setLineDash([10,7]);
+   ctx.strokeRect(z.x+2,z.y+2,z.w-4,z.h-4);
+   ctx.setLineDash([]);
+   ctx.fillStyle='#fff1a8';ctx.font='bold 11px Arial';ctx.textAlign='center';
+   ctx.fillText('⛔ NO ENTRY',z.x+z.w/2,z.y+z.h/2+4);
+   ctx.textAlign='left';ctx.restore();
+ });
+}
+
+function drawGoal(){
+ const p=1+Math.sin(performance.now()/180)*.08;
+ ctx.save();ctx.translate(goal.x,goal.y);ctx.scale(p,p);
+ ctx.shadowColor='#48bd48';ctx.shadowBlur=22;ctx.fillStyle='#69d153';ctx.fillRect(-25,-25,50,50);ctx.shadowBlur=0;
+ ctx.strokeStyle='#efffe8';ctx.lineWidth=5;ctx.strokeRect(-14,-14,28,28);ctx.fillStyle='#efffe8';ctx.fillRect(-4,-4,8,8);ctx.restore();
+}
+
+function drawPlayer(){
+ ctx.save();ctx.translate(player.x,player.y);
+ ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,21,19,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#fff';ctx.strokeStyle='#68727b';ctx.lineWidth=2;
+ ctx.beginPath();ctx.roundRect(-15,-7,30,31,9);ctx.fill();ctx.stroke();
+ ctx.beginPath();ctx.arc(0,-15,14,0,Math.PI*2);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#18232d';ctx.fillRect(-11,-19,22,10);ctx.fillStyle='#bfeaf5';ctx.fillRect(-8,-17,16,6);
+ ctx.restore();
+}
+
+function draw(){
+ drawFloor();drawWalls();drawForbidden();drawOHT();drawNPCs();drawGoal();
+ if(mouse.inside&&running){
+   ctx.save();ctx.setLineDash([4,8]);ctx.strokeStyle='#267ce055';ctx.lineWidth=2;
+   ctx.beginPath();ctx.moveTo(player.x,player.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();ctx.restore();
+ }
+ drawPlayer();
+ ctx.fillStyle='#27313b';ctx.font='bold 13px Arial';ctx.fillText('CLEANROOM · ISO CLASS AREA',55,57);
+ ctx.fillStyle='#a94222';ctx.font='bold 12px Arial';ctx.fillText('⚠ OHT / WORKPLACE SAFETY',W-205,57);
+}
+
+canvas.addEventListener('mousemove',e=>{
+ const r=canvas.getBoundingClientRect();
+ mouse.x=(e.clientX-r.left)*W/r.width;
+ mouse.y=(e.clientY-r.top)*H/r.height;
+ mouse.inside=true;
+});
+canvas.addEventListener('mouseleave',()=>mouse.inside=false);
+
+document.getElementById('restart').onclick=()=>loadRound(round);
+document.getElementById('tryAgain').onclick=()=>{totalHits=0;loadRound(0)};
+
+/* ══════════════════════════════════════════════════════════════
+   랭킹 시스템 (Firebase Realtime Database 공유 랭킹 + 로컬 캐시)
+   - Particle Protocol : Wafer Defense(index.html)와 동일한 Firebase
+     프로젝트를 사용하되, 저장 경로(FB_RANKING_PATH)가 달라 랭킹이
+     서로 섞이지 않습니다.
+   - 정렬 기준: 완료 시간이 짧은 순, 동점이면 재도전(충돌) 횟수가
+     적은 순.
+   - 점수(완료 시간)가 0 이하인 비정상 기록은 저장/표시하지 않습니다.
+   ══════════════════════════════════════════════════════════════ */
+const firebaseConfig={
+ apiKey:"AIzaSyDLstDkmHhmkOCFmh2NKmeFkBJ-nvOkE4M",
+ authDomain:"skhunix2.firebaseapp.com",
+ databaseURL:"https://skhunix2-default-rtdb.europe-west1.firebasedatabase.app",
+ projectId:"skhunix2",
+ storageBucket:"skhunix2.firebasestorage.app",
+ messagingSenderId:"247709142928",
+ appId:"1:247709142928:web:fb69025516ec127a286d15"
+};
+const FB_RANKING_PATH='cleanroomEscapeRankings';
+const RANK_PAGE_SIZE=10;
+let fbDb=null,fbReady=false,allRanks=[],rankPage=0;
+
+function getLocalRanks(){try{return JSON.parse(localStorage.getItem('cleanroomEscapeRanks')||'[]')}catch(e){return[]}}
+function setLocalRanks(list){try{localStorage.setItem('cleanroomEscapeRanks',JSON.stringify(list))}catch(e){}}
+function sortRanks(a,b){
+ if(a.score!==b.score) return a.score-b.score;       // 완료 시간 짧은 순
+ return (a.hits||0)-(b.hits||0);                     // 동점 시 재도전 적은 순
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function initFirebaseBoard(){
+ try{
+   if(typeof firebase==='undefined') return;
+   firebase.initializeApp(firebaseConfig);
+   fbDb=firebase.database();
+   fbReady=true;
+   fbDb.ref(FB_RANKING_PATH).limitToLast(300).on('value',function(snap){
+     const val=snap.val()||{};
+     let list=Object.keys(val).map(k=>val[k]).filter(x=>Number(x.score)>0);
+     list.sort(sortRanks);
+     list=list.slice(0,200);
+     setLocalRanks(list);
+     if(document.getElementById('rankOverlay').classList.contains('show')){
+       allRanks=list; renderRankList();
+     }
+   },function(err){ console.warn('클린룸 탈출 미션: 랭킹 실시간 구독 실패(오프라인이거나 규칙 문제)',err); });
+ }catch(e){ console.warn('클린룸 탈출 미션: Firebase 초기화 실패, 이 브라우저 로컬 저장으로만 동작합니다.',e); }
+}
+
+function saveScore(){
+ const btn=document.getElementById('saveRankBtn');
+ const msg=document.getElementById('saveMsg');
+ if(btn.disabled) return;
+ const score=Number(lastFinalScore);
+ if(!score||score<=0){ msg.style.color='#ff7272'; msg.textContent='기록이 올바르지 않아 저장할 수 없습니다.'; return; }
+ let name=(document.getElementById('rankNameInput').value||'').trim().slice(0,10);
+ if(!name) name='PLAYER';
+ const entry={id:'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),name,score,hits:lastFinalHits||0};
+ let r=getLocalRanks().filter(x=>Number(x.score)>0);
+ r.push(entry); r.sort(sortRanks); r=r.slice(0,200);
+ setLocalRanks(r); allRanks=r;
+ btn.disabled=true;
+ msg.style.color='#6be18b';
+ msg.textContent='✓ 랭킹에 저장되었습니다!';
+ if(fbReady){
+   fbDb.ref(FB_RANKING_PATH+'/'+entry.id).set(entry)
+     .catch(function(err){ console.warn('클린룸 탈출 미션: 랭킹 서버 저장 실패(오프라인?) - 이 기기에만 저장됩니다.',err); });
+ }
+}
+
+function renderRankList(){
+ const total=allRanks.length;
+ const totalPages=Math.max(1,Math.ceil(total/RANK_PAGE_SIZE));
+ if(rankPage>=totalPages) rankPage=totalPages-1;
+ if(rankPage<0) rankPage=0;
+ const start=rankPage*RANK_PAGE_SIZE;
+ const pageItems=allRanks.slice(start,start+RANK_PAGE_SIZE);
+ const list=document.getElementById('rankList');
+ list.innerHTML=pageItems.length?pageItems.map((x,i)=>
+   `<div class="rankRow"><span>${start+i+1}. ${escapeHtml(x.name)}</span><b>${Number(x.score).toFixed(1)}s</b></div>`
+ ).join(''):`<div class="rankRow"><span>아직 기록이 없습니다.</span><b>-</b></div>`;
+ const pager=document.getElementById('rankPager');
+ pager.innerHTML=`<button class="pageBtn" id="prevPageBtn"${rankPage<=0?' disabled':''}>← 이전</button>`+
+   `<span style="color:#a9b8ca;font-weight:800">${rankPage+1} / ${totalPages}</span>`+
+   `<button class="pageBtn" id="nextPageBtn"${rankPage>=totalPages-1?' disabled':''}>다음 →</button>`;
+ document.getElementById('prevPageBtn').onclick=()=>{ if(rankPage>0){rankPage--;renderRankList();} };
+ document.getElementById('nextPageBtn').onclick=()=>{ if(rankPage<totalPages-1){rankPage++;renderRankList();} };
+}
+
+function showRank(){
+ allRanks=getLocalRanks().filter(x=>Number(x.score)>0).sort(sortRanks);
+ rankPage=0;
+ renderRankList();
+ show('rankOverlay');
+}
+
+document.getElementById('saveRankBtn').onclick=saveScore;
+document.getElementById('viewRankBtn').onclick=showRank;
+document.getElementById('viewRankBtnHeader').onclick=showRank;
+document.getElementById('closeRankBtn').onclick=()=>hide('rankOverlay');
+
+initFirebaseBoard();
+loadRound(0);
+
+function loop(){
+ update();draw();
+ document.getElementById('timer').textContent=((performance.now()-startTime)/1000).toFixed(1)+' s';
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+})();
+</script>
+<!-- ROUTE CHECK: six rounds have explicit safe corridors -->
+</body>
+</html>
